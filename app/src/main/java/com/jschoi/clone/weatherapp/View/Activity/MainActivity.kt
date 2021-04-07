@@ -44,22 +44,37 @@ class MainActivity : AppCompatActivity(), View.OnClickListener {
     }
 
     override fun onClick(v: View?) {
-        Log.d(TAG, "OnClick...")
         when (v!!.id) {
             btnSearch.id -> if (edCity.toString().isNullOrEmpty()) {
                 return
             } else {
-                initRetrofit(edCity.text.toString())
+                requestWeatherSrch(edCity.text.toString())
             }
         }
     }
 
-    private fun initRetrofit(searchData: String) {
+    /**
+     * Show Toast Message
+     */
+    private fun showToast(isLongDuration: Boolean, message: String?) {
+        var duration = Toast.LENGTH_SHORT
+
+        if (isLongDuration) {
+            duration = Toast.LENGTH_LONG
+        }
+        Toast.makeText(
+            this@MainActivity,
+            message ?: getString(R.string.error_network),
+            duration
+        ).show()
+    }
+
+    private fun requestWeatherSrch(searchData: String) {
         supplementService.reqeustSample(searchData, getString(R.string.weather_app_key))
             .enqueue(object : Callback<ResSample> {
                 override fun onResponse(call: Call<ResSample>, response: Response<ResSample>) {
                     val res = response.body()
-                    if (res != null) {
+                    if (response.code() == 200 && res != null) {
                         // 온도
                         tvTemperature.text = String.format("%d°C", (res.main.temp - 273.15).toInt())
                     } else {
@@ -68,26 +83,9 @@ class MainActivity : AppCompatActivity(), View.OnClickListener {
                 }
 
                 override fun onFailure(call: Call<ResSample>, t: Throwable) {
-                    Log.d(TAG, ">>>>>>>>>>>>>>>>>>>>> ${t}")
+                    Log.d(TAG, ">>>>>>>>>>>>>>>>>>>>> ${t.message}")
                 }
             })
     }
 
-
-    /**
-     * Show Toast Message
-     */
-    private fun showToast(isLongDuration: Boolean, message: String?) {
-        var duration = Toast.LENGTH_SHORT
-
-        if (message.isNullOrEmpty()) {
-            message.apply {
-                getString(R.string.error_network)
-            }
-        }
-        if (isLongDuration) {
-            duration = Toast.LENGTH_LONG
-        }
-        Toast.makeText(this@MainActivity, message, duration).show()
-    }
 }
